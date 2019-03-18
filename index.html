@@ -417,7 +417,7 @@ int main() {
 
     auto end = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    std::cout << "Time for Delaunay-Triangulation of 1,000,000 random points: " << elapsed.count() << "ms\n";
+    std::cout << "Time for Delaunay-Triangulation of " << num_points << " random points: " << elapsed.count() << "ms\n";
 
     //small instance for drawing
     num_points = 1'000;
@@ -492,7 +492,7 @@ int main() {
 
 	<h2>Output</h2>
 	<pre>
-Time for Delaunay-Triangulation of 1,000,000 random points: 515ms
+Time for Delaunay-Triangulation of 100000 random points: 515ms
 All points inside polygon? yes
 3103/5000 (0.6206) points in lower half. Area ratio: 0.627613
 	</pre>
