@@ -33,7 +33,7 @@ int main() {
 
     auto end = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    std::cout << "Time for Delaunay-Triangulation of 1,000,000 random points: " << elapsed.count() << "ms\n";
+    std::cout << "Time for Delaunay-Triangulation of " << num_points << " random points: " << elapsed.count() << "ms\n";
 
     //small instance for drawing
     num_points = 1'000;
