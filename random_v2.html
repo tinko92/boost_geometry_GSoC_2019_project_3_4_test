@@ -13,53 +13,39 @@
 
     <p>The following shows the usage of the proposed uniform point sampler. The required library code can be found here: </p>
 
-<a href="https://github.com/tinko92/geometry/blob/feature/uniform_sampler_extension/include/boost/geometry/extensions/generate/predicates.hpp">generate/predicates.hpp</a><br />
-<a href="https://github.com/tinko92/geometry/blob/feature/uniform_sampler_extension/include/boost/geometry/extensions/generate/generate.hpp">generate/generate.hpp</a><br />
 <a href="https://github.com/tinko92/geometry/blob/feature/uniform_sampler_extension/include/boost/geometry/extensions/random/subsets.hpp">random/subsets.hpp</a><br />
 <a href="https://github.com/tinko92/geometry/blob/feature/uniform_sampler_extension/include/boost/geometry/extensions/random/detail/uniform_point_distribution.hpp">random/detail/uniform_point_distribution.hpp</a><br />
 <a href="https://github.com/tinko92/geometry/blob/feature/uniform_sampler_extension/include/boost/geometry/extensions/random/dispatch/uniform_point_distribution.hpp">random/dispatch/uniform_point_distribution.hpp</a><br />
 <a href="https://github.com/tinko92/geometry/blob/feature/uniform_sampler_extension/include/boost/geometry/extensions/random/uniform_point_distribution.hpp">random/uniform_point_distribution.hpp</a>
 
 	<h2>Output file: random_samples_interior_boundary.svg</h2>
-	<img src="random_samples_interior_boundary.svg" />
+	<img src="random_samples_interior.svg" />
 
 	<h2>main.cpp</h2>
 	<script type="text/plain" class="language-cpp">
 #include <random>
 #include <iostream>
 #include <boost/geometry/geometry.hpp>
-#include <boost/geometry/extensions/generate/predicates.hpp>
-#include <boost/geometry/extensions/generate/generate.hpp>
 #include <boost/geometry/extensions/random/uniform_point_distribution.hpp>
 #include <fstream>
 
 namespace bg = boost::geometry;
 
-template<typename Point, typename Geometry, typename Polygon, typename Generator>
-void sample_and_write(Geometry const& g, Polygon const& star, std::size_t in, std::size_t bnd, Generator& gen, bg::svg_mapper<Point>& mapper)
+template<typename Point, typename Geometry, typename Generator>
+void sample_and_write(Geometry const& g, std::size_t in, Generator& gen, bg::svg_mapper<Point>& mapper)
 {
-    auto dist = bg::random::uniform_point_distribution<Point>(g);
-    auto dist_boundary = bg::random::uniform_point_distribution<Point, Geometry, bg::random::boundary>(g);
-    std::vector<Point> out;
+    auto dist = bg::random::uniform_point_distribution(g);
+    std::vector<typename bg::point_type<Geometry>::type> out;
     out.resize(in);
-    std::vector<Point> out_boundary;
-    out_boundary.resize(bnd);
-    bg::generate::generate(out.begin(), out.end(), std::bind(dist, std::ref(gen)), bg::generate::within<Point>(star));
-    bg::generate::generate(out_boundary.begin(), out_boundary.end(), std::bind(dist_boundary, std::ref(gen)), !bg::generate::within<Point>(star));
+    std::generate(out.begin(), out.end(), std::bind(dist, std::ref(gen)));
 
     mapper.add(g);
     for(const auto& p : out) {
         mapper.add(p);
     }
-    for(const auto& p : out_boundary) {
-        mapper.add(p);
-    }
     mapper.map(g, "opacity:0.4;fill:none;stroke:rgb(212,0,0);stroke-width:1");
     for(const auto& p : out) {
         mapper.map(p, "fill-opacity:0.5;fill:rgb(153,204,0);stroke:rgb(153,204,0);stroke-width:1",1);
-    }
-    for(const auto& p : out_boundary) {
-        mapper.map(p, "fill-opacity:0.5;fill:rgb(153,204,0);stroke:rgb(153,0,204);stroke-width:1",1);
     }
 }
 
@@ -71,8 +57,7 @@ int main() {
     typedef bg::model::multi_linestring<linestring_t> multi_linestring_t;
     typedef bg::model::box<point_t> box_t;
     polygon_t poly{{{2,1.3},{2.4,1.7},{2.8,1.8},{3.4,1.2},{3.7,1.6},{3.4,2},{4.1,3},{5.3,2.6},{5.4,1.2},{4.9,0.8},{2.9,0.7},{2,1.3}},
-            {{4.0,2.0},{4.2,1.4},{4.8,1.9},{4.4,2.2},{4.0,2.0}}}, 
-        star{{{4.0,-0.5},{3.5,1.0},{2.0,1.5},{3.5,2.0},{4.0,3.5},{4.5,2.0},{6.0,1.5},{4.5,1.0},{4.0,-0.5}}};
+            {{4.0,2.0},{4.2,1.4},{4.8,1.9},{4.4,2.2},{4.0,2.0}}};
     multi_point_t mp;
     for(double y=0.0; y<0.6; y+=0.1) {
         for(double x=3.6; x<4.5; x+=0.1) {
@@ -89,20 +74,18 @@ int main() {
     }
     box_t b{{5.5, 1.0}, {6.5, 2.0}};
 
-    std::ofstream svg("random_samples_interior_boundary.svg");
+    std::ofstream svg("random_samples_interior.svg");
     bg::svg_mapper<point_t> mapper(svg, 800, 800);
-    mapper.add(star);
-    mapper.map(star, "opacity:0.4;fill:none;stroke:rgb(0,0,0);stroke-width:1");
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    sample_and_write(poly, star, 1000, 100, gen, mapper);
-    sample_and_write(b, star, 50, 100, gen, mapper);
-    sample_and_write(mls, star, 20, 20, gen, mapper);
-    auto dist = bg::random::uniform_point_distribution<point_t>(mp);
+    sample_and_write(poly, 1000, gen, mapper);
+    sample_and_write(b, 50, gen, mapper);
+    sample_and_write(mls, 20, gen, mapper);
+    auto dist = bg::random::uniform_point_distribution(mp);
     std::vector<point_t> out;
     out.resize(10);
-    bg::generate::generate(out.begin(), out.end(), std::bind(dist, std::ref(gen)), bg::generate::within<point_t>(star));
+    std::generate(out.begin(), out.end(), std::bind(dist, std::ref(gen)));
     for(const auto& p : out) {
         mapper.add(p);
     }
@@ -114,7 +97,6 @@ int main() {
 
     return 0;
 }
-
 	</script>
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.15.0/prism.min.js"></script>
